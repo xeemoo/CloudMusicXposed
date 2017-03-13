@@ -22,8 +22,9 @@ public class MainHook implements IXposedHookLoadPackage {
     private Context mContext;
     private String mVersionName;
     private TextView mTextView;
-    private int mSignId = 2131690416;
-    private int mVerTextId = 2131689623;
+    private int mSignId = 0;
+    private int mVerTextId = 0;
+    boolean zici = false; // 国产软件怎么不兹磁
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
@@ -41,6 +42,15 @@ public class MainHook implements IXposedHookLoadPackage {
 
     private void hookCloudMusic(XC_LoadPackage.LoadPackageParam param, String versionName) {
         if (versionName.contains("3.8.1")) {
+            mSignId = 2131690416;
+            mVerTextId = 2131689623;
+            zici = true;
+        } else if(versionName.contains("4.0.0")) {
+            mSignId = 2131690481;  //id=a0m
+            mVerTextId = 2131689632; //id=dk
+            zici = true;
+        }
+        if (zici) {
             XposedHelpers.findAndHookMethod(PACKAGE + ".activity.MainActivity", param.classLoader,
                     "onResume", new XC_MethodHook() {
                         @Override
@@ -50,15 +60,15 @@ public class MainHook implements IXposedHookLoadPackage {
                             mTextView.performClick();
                         }
                     });
+            XposedHelpers.findAndHookMethod(PACKAGE + ".activity.AboutActivity", param.classLoader,
+                    "onCreate", Bundle.class, new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            TextView textView = (TextView) ((Activity) param.thisObject).findViewById(mVerTextId);
+                            textView.setGravity(Gravity.CENTER);
+                            textView.setText(textView.getText() + "\n云音乐自动签到 v1.1 by MoLulu");
+                        }
+                    });
         }
-        XposedHelpers.findAndHookMethod(PACKAGE + ".activity.AboutActivity", param.classLoader,
-                "onCreate", Bundle.class, new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        TextView textView = (TextView) ((Activity) param.thisObject).findViewById(mVerTextId);
-                        textView.setGravity(Gravity.CENTER);
-                        textView.setText(textView.getText() + "\n云音乐自动签到 V1.0 by MoLulu");
-                    }
-                });
     }
 }
