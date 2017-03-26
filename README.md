@@ -18,4 +18,8 @@ NeteaseCloudMusic for Android auto sign
 更多版本等我手机网易云音乐更新了再去找资源ID
 
 
+## BUG日志 ##
+
+* 2017.03.26: Xposed提示找不到入口类，猜想可能是更新了Android Studio到2.3，混淆规则有变化，把主类名字给混淆了。-keep 主类，问题解决
+
 ------
