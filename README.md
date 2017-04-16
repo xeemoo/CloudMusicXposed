@@ -21,5 +21,6 @@ NeteaseCloudMusic for Android auto sign
 ## BUG日志 ##
 
 * 2017.03.26: Xposed提示找不到入口类，猜想可能是更新了Android Studio到2.3，混淆规则有变化，把主类名字给混淆了。-keep 主类，问题解决
+* 2017.04.16: 想实现在Xposed管理器里面点击插件跳转到网易云音乐关于页面，然而关于页面没有任何的action等，遇到`Permission Denial`，无法简单的构建Intent启动。问题未解决
 
 ------

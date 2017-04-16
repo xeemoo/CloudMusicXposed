@@ -49,9 +49,9 @@ public class MainHook implements IXposedHookLoadPackage {
             mSignId = 2131690481;  //id=a0m
             mVerTextId = 2131689632; //id=dk
             zici = true;
-        } else if(versionName.contains("4.0.1")) {
+        } else if(versionName.contains("4.0.1") || versionName.contains("4.0.2")) {
             mSignId = 2131690486;  //id=a0r
-            mVerTextId = 2131689632;
+            mVerTextId = 2131689632; //id=dk
             zici = true;
         }
         if (zici) {
@@ -70,7 +70,7 @@ public class MainHook implements IXposedHookLoadPackage {
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                             TextView textView = (TextView) ((Activity) param.thisObject).findViewById(mVerTextId);
                             textView.setGravity(Gravity.CENTER);
-                            textView.setText(textView.getText() + "\n云音乐自动签到 v1.1.1 by MoLulu");
+                            textView.setText(textView.getText() + "\n云音乐自动签到 v1.1.2 by MoLulu");
                         }
                     });
         }
