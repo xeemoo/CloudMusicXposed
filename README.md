@@ -4,6 +4,8 @@
 
 NeteaseCloudMusic for Android auto sign
 
+**Download: ** [CloudMusicXposed_v2.0](https://github.com/XF-zhjnc/CloudMusicXposed/raw/master/app/cloudmusicxposed_v2.0.apk)
+
 ## Screenshot ##
 
 ![](/screenshot/op.png) 
