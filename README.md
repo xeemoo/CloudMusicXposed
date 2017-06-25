@@ -2,13 +2,16 @@
 
 网易云音乐Android客户端自动签到插件
 
+- 新增去除因版权问题无法分享歌词图片的限制
+
 NeteaseCloudMusic for Android auto sign
 
-**Download: ** [CloudMusicXposed_v2.0](https://github.com/XF-zhjnc/CloudMusicXposed/raw/master/app/cloudmusicxposed_v2.0.apk)
+**Download:**  [CloudMusicXposed_v2.1](https://github.com/XF-zhjnc/CloudMusicXposed/raw/master/app/cloudmusicxposed_v2.1.apk)
 
 ## Screenshot ##
 
 ![](/screenshot/op.png) 
+![](/screenshot/sharelyc.png) 
 
 
 ## About ##
@@ -18,6 +21,8 @@ NeteaseCloudMusic for Android auto sign
 本来只hook签到TextView，受了启发顺便把AboutActivity改了
 
 更多版本等我手机网易云音乐更新了再去找资源ID
+
+某些本地歌曲因版权问题无法使用歌词分享功能，插件去除了该限制，可能会影响云音乐其它什么功能，尚未发现
 
 
 ## BUG日志 ##
