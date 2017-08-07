@@ -21,6 +21,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private static final String PACKAGE = "com.netease.cloudmusic";
 
     private Context mContext;
+    private String mVersionName;
     private XC_LoadPackage.LoadPackageParam mParam;
 
     @Override
@@ -33,6 +34,7 @@ public class MainHook implements IXposedHookLoadPackage {
         Object activityThread = callStaticMethod(findClass("android.app.ActivityThread", null),
                 "currentActivityThread");
         mContext = (Context) callMethod(activityThread, "getSystemContext");
+        mVersionName = mContext.getPackageManager().getPackageInfo(packageName, 0).versionName;
         //XposedBridge.log("CloudMusic: " + loadPackageParam.packageName + mVersionName);
         hookCloudMusic(loadPackageParam);
 
@@ -72,7 +74,15 @@ public class MainHook implements IXposedHookLoadPackage {
      */
     private void canShareAnyMusic(XC_LoadPackage.LoadPackageParam loadPackageParam) {
         Class<?> MusicInfoClass = findClass(PACKAGE + ".meta.MusicInfo", loadPackageParam.classLoader);
-        findAndHookMethod(PACKAGE + ".e", loadPackageParam.classLoader, "a",
+        String className = "";
+        if (mVersionName.contains("4.1.1") || mVersionName.contains("4.1.2")) {
+            className = PACKAGE + ".e";
+        } else {
+            // v4.1.3 该类更改了位置
+            className = PACKAGE + ".module.o.b";
+        }
+
+        findAndHookMethod(className, loadPackageParam.classLoader, "a",
                 MusicInfoClass, Context.class, Integer.TYPE, new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
