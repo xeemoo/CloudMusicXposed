@@ -52,7 +52,7 @@ public class MainHook implements IXposedHookLoadPackage {
                                 if (param.args[0].toString().equals("签到")) {
                                     TextView t1 = (TextView) param.thisObject;
                                     t1.performClick();
-                                    XposedBridge.log("签到ID=" + t1.getId());
+//                                    XposedBridge.log("签到ID=" + t1.getId());
                                 }
                             }
                         }
@@ -108,18 +108,30 @@ public class MainHook implements IXposedHookLoadPackage {
     }
 
     /**
-     * "关于网易云音乐"界面，长按版本号弹窗
+     * "关于网易云音乐"界面，长按版本号，弹窗
      * @param param
      */
     private void addMyAd(XC_LoadPackage.LoadPackageParam param) {
         String className = PACKAGE + ".activity.AboutActivity";
-        findAndHookMethod(className, param.classLoader, "ac", new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                String str = (String) param.getResult();
-                param.setResult(str + "\n[plug]  auto sign by MoLulu");
-            }
-        });
+        try {
+            findAndHookMethod(className, param.classLoader, "ac", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    String str = (String) param.getResult();
+                    if (!str.contains("plugins"))
+                        param.setResult(str + "[plugins]  Developer: MoLulu");
+                }
+            });
+        } catch (NoSuchMethodError error) {
+            findAndHookMethod(className, param.classLoader, "ab", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    String str = (String) param.getResult();
+                    if (!str.contains("plugins"))
+                        param.setResult(str + "[plugins]  Developer: MoLulu");
+                }
+            });
+        }
     }
 
     /**
