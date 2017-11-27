@@ -1,8 +1,11 @@
 # CloudMusicXposed #
 
-网易云音乐Android客户端自动签到插件
+网易云音乐Android客户端插件
 
-- 新增去除因版权问题无法分享歌词图片的限制 (支持v4.1.1及以上，v4.1.1以下未测试)
+- 自动签到
+- 阻止签到按钮打开商城 (支持v4.2.0，其他版本未测试)
+- 阻止程序期启动页广告: 阻止fragment的创建，启动速度明显加快 (支持v4.2.0，其他版本未测试)
+- 去除因版权问题无法分享歌词图片的限制 (支持v4.1.1及以上，v4.1.1以下未测试)
 
 NeteaseCloudMusic for Android auto sign
 
@@ -16,20 +19,15 @@ NeteaseCloudMusic for Android auto sign
 
 ## About ##
 
-心血来潮写的自用插件，写完发现酷安上已经有同类的[插件](http://www.coolapk.com/apk/com.specher.music163)，而且刚发布不久。。。
-
-本来只hook签到TextView，受了启发顺便把AboutActivity改了
-
-更多版本等我手机网易云音乐更新了再去找资源ID
-
-某些本地歌曲因版权问题无法使用歌词分享功能，插件去除了该限制，可能会影响云音乐其它什么功能，尚未发现
-
+自用插件，不会适配太多版本，需要请fork代码自行编译
 
 ## TODO List ##
 
 这里是即将要添加的功能，如果您有新的想法，可以开issues，如果您实现了该功能，欢迎PR。
 
 1. TODO  添加通过颜色代码设置主题色的快捷入口
+2. TODO  去除升级提示
+3. TODO  解锁vip专属歌词分享模板
 
 ## BUG日志 ##
 
@@ -39,5 +37,6 @@ NeteaseCloudMusic for Android auto sign
 * 2017.05.03： `AboutActivity`中用于启动该Activity的静态方法未能call成功
 * 2017.08.06： 歌词分享功能在v4.1.3版本中失效，原因: 要hook的类包名改了（从`ui.LyricView`中的分享按钮往下找）
 * 2017.08.07： 切换颜色的Listener是匿名内部类，应寻求别的有效方法
+* 2017.11.27： 诈尸更新，只适配v4.2.0
 
 ------

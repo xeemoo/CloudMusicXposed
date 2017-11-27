@@ -1,13 +1,11 @@
 package cn.com.zhjnc.cloudmusicxposed;
 
 import android.content.Context;
-import android.view.Gravity;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
@@ -36,40 +34,58 @@ public class MainHook implements IXposedHookLoadPackage {
         mContext = (Context) callMethod(activityThread, "getSystemContext");
         mVersionName = mContext.getPackageManager().getPackageInfo(packageName, 0).versionName;
         //XposedBridge.log("CloudMusic: " + loadPackageParam.packageName + mVersionName);
-        hookCloudMusic(loadPackageParam);
 
-        //showCurrentMusicInfo(loadPackageParam);
-        canShareAnyMusic(loadPackageParam);
+        autoSign(loadPackageParam);          //自动签到
+        hookMallIn(loadPackageParam);        //阻止签到时打开商城
+        hookAd(loadPackageParam);            //阻止程序启动广告
+        canShareAnyMusic(loadPackageParam);  //去除无版权歌曲分享限制
+        addMyAd(loadPackageParam);           //添加个人信息
     }
 
-    private void hookCloudMusic(XC_LoadPackage.LoadPackageParam param) {
+    private void autoSign(XC_LoadPackage.LoadPackageParam param) {
         findAndHookMethod("android.widget.TextView", param.classLoader,
                 "setText", CharSequence.class, new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        if (!param.args[0].equals(null)) {
-                            if (param.args[0].toString().equals("签到")) {
-                                TextView t1 = (TextView) param.thisObject;
-                                t1.performClick();
-                                XposedBridge.log("签到ID=" + t1.getId());
-                            } else if (param.args[0].toString().equals("关于网易云音乐")) {
-                                TextView t2 = (TextView) ((LinearLayout) ((ScrollView) ((LinearLayout) ((TextView) param.thisObject).getParent().getParent()).getChildAt(2)).getChildAt(0)).getChildAt(1);
-                                if (!t2.getText().toString().contains("自动签到") && t2.getText().toString().contains("V")) {
-                                    t2.setGravity(Gravity.CENTER);
-                                    t2.setText(t2.getText() + "\n云音乐自动签到 v2.0 by MoLulu");
-                                    XposedBridge.log("版本ID=" + t2.getId());
+                        if (param.args[0] != null) {
+                            if (!param.args[0].equals(null)) {
+                                if (param.args[0].toString().equals("签到")) {
+                                    TextView t1 = (TextView) param.thisObject;
+                                    t1.performClick();
+                                    XposedBridge.log("签到ID=" + t1.getId());
                                 }
                             }
-
                         }
                     }
                 });
 
     }
 
+    private void hookMallIn(XC_LoadPackage.LoadPackageParam loadPackageParam) {
+        String className = PACKAGE + ".ui.j";
+        findAndHookMethod(className, loadPackageParam.classLoader, "w", new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                param.setResult(false);
+            }
+        });
+    }
+
+    private void hookAd(XC_LoadPackage.LoadPackageParam loadPackageParam) {
+        Class<?> AdClass = findClass(PACKAGE + ".module.ad.c.b", loadPackageParam.classLoader);
+        String adClassName = PACKAGE + ".module.ad.c";
+        findAndHookMethod(adClassName, loadPackageParam.classLoader, "a", AdClass,
+                new XC_MethodReplacement() {
+                    @Override
+                    protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                        return null;
+                    }
+                });
+    }
+
     /**
      * 去除因版权问题无法分享歌词图片的限制
-     * 支持版本：V4.1.1.190367
+     * 支持版本：V4.1.1.190367 - V4.2.0.310743
      * @param loadPackageParam
      */
     private void canShareAnyMusic(XC_LoadPackage.LoadPackageParam loadPackageParam) {
@@ -89,6 +105,21 @@ public class MainHook implements IXposedHookLoadPackage {
                         param.setResult(false);
                     }
                 });
+    }
+
+    /**
+     * "关于网易云音乐"界面，长按版本号弹窗
+     * @param param
+     */
+    private void addMyAd(XC_LoadPackage.LoadPackageParam param) {
+        String className = PACKAGE + ".activity.AboutActivity";
+        findAndHookMethod(className, param.classLoader, "ac", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                String str = (String) param.getResult();
+                param.setResult(str + "\n[plug]  auto sign by MoLulu");
+            }
+        });
     }
 
     /**
