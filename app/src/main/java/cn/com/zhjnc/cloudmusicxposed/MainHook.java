@@ -1,12 +1,16 @@
 package cn.com.zhjnc.cloudmusicxposed;
 
 import android.content.Context;
+import android.support.v4.view.MenuItemCompat;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.TextView;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
+import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 import static de.robv.android.xposed.XposedHelpers.callMethod;
@@ -39,7 +43,8 @@ public class MainHook implements IXposedHookLoadPackage {
         hookMallIn(loadPackageParam);        //阻止签到时打开商城
         hookAd(loadPackageParam);            //阻止程序启动广告
         canShareAnyMusic(loadPackageParam);  //去除无版权歌曲分享限制
-        addMyAd(loadPackageParam);           //添加个人信息
+        hookColorPicker(loadPackageParam);   //个性换肤的自选颜色增加ARGB快捷入口
+        addMyAd(loadPackageParam);           //添加插件信息
     }
 
     private void autoSign(XC_LoadPackage.LoadPackageParam param) {
@@ -119,7 +124,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     String str = (String) param.getResult();
                     if (!str.contains("plugins"))
-                        param.setResult(str + "[plugins]  Developer: MoLulu");
+                        param.setResult(str + "[plugins]  CloudMusicXposed");
                 }
             });
         } catch (NoSuchMethodError error) {
@@ -128,10 +133,34 @@ public class MainHook implements IXposedHookLoadPackage {
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     String str = (String) param.getResult();
                     if (!str.contains("plugins"))
-                        param.setResult(str + "[plugins]  Developer: MoLulu");
+                        param.setResult(str + "[plugins]  CloudMusicXposed");
                 }
             });
         }
+    }
+
+    private void hookColorPicker(XC_LoadPackage.LoadPackageParam param) {
+        final Class clazz = XposedHelpers.findClass(PACKAGE + ".activity.ThemeColorDetailActivity", param.classLoader);
+        final Class pickerClass = XposedHelpers.findClass(PACKAGE + ".ui.a.a", param.classLoader);
+        findAndHookMethod(clazz, "onCreateOptionsMenu", Menu.class, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                Menu m = (Menu) param.args[0];
+                if (m.size() == 1) {
+                    MenuItemCompat.setShowAsAction(m.add(0, 1, 0, "ARGB"), 2);
+                }
+            }
+        });
+        findAndHookMethod(clazz, "onOptionsItemSelected", MenuItem.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                MenuItem mi = (MenuItem)param.args[0];
+                if (mi.getItemId() == 1) {
+                    //此处会被调用两次，估计是7.0框架的问题...
+                    callStaticMethod(pickerClass, "a", param.thisObject, 1, null);
+                }
+            }
+        });
     }
 
     /**

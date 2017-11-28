@@ -4,17 +4,19 @@
 
 - 自动签到
 - 阻止签到按钮打开商城 (支持v4.2.0，其他版本未测试)
-- 阻止程序期启动页广告: 阻止fragment的创建，启动速度明显加快 (支持v4.2.0，其他版本未测试)
+- 阻止程序启动页广告: 阻止fragment的创建，启动速度明显加快 (支持v4.2.0，其他版本未测试)
 - 去除因版权问题无法分享歌词图片的限制 (支持v4.1.1及以上，v4.1.1以下未测试)
+- 增加个性换肤自选颜色快捷入口
 
 NeteaseCloudMusic for Android auto sign
 
-**Download:**  [CloudMusicXposed_v2.1](https://github.com/XF-zhjnc/CloudMusicXposed/raw/master/app/cloudmusicxposed_v2.1.apk)
+**Download:**  [CloudMusicXposed_v2.2](https://github.com/XF-zhjnc/CloudMusicXposed/raw/master/app/cloudmusicxposed_v2.2.apk)
 
 ## Screenshot ##
 
-![](/screenshot/op.png) 
-![](/screenshot/sharelyc.png) 
+![](/screenshot/ss01.png) 
+![](/screenshot/ss02.png) 
+![](/screenshot/ss03.png) 
 
 
 ## About ##
@@ -25,9 +27,8 @@ NeteaseCloudMusic for Android auto sign
 
 这里是即将要添加的功能，如果您有新的想法，可以开issues，如果您实现了该功能，欢迎PR。
 
-1. TODO  添加通过颜色代码设置主题色的快捷入口
-2. TODO  去除升级提示
-3. TODO  解锁vip专属歌词分享模板
+1. TODO  去除升级提示
+2. TODO  解锁vip专属歌词分享模板
 
 ## BUG日志 ##
 
