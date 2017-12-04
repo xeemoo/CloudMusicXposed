@@ -25,6 +25,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private Context mContext;
     private String mVersionName;
     private XC_LoadPackage.LoadPackageParam mParam;
+    private CloudMusicVersion mMusicVersion;
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
@@ -38,12 +39,14 @@ public class MainHook implements IXposedHookLoadPackage {
         mContext = (Context) callMethod(activityThread, "getSystemContext");
         mVersionName = mContext.getPackageManager().getPackageInfo(packageName, 0).versionName;
         //XposedBridge.log("CloudMusic: " + loadPackageParam.packageName + mVersionName);
+        mMusicVersion = new CloudMusicVersion(mVersionName);
 
         autoSign(loadPackageParam);          //自动签到
         hookMallIn(loadPackageParam);        //阻止签到时打开商城
         hookAd(loadPackageParam);            //阻止程序启动广告
         canShareAnyMusic(loadPackageParam);  //去除无版权歌曲分享限制
         hookColorPicker(loadPackageParam);   //个性换肤的自选颜色增加ARGB快捷入口
+        hookUpdate(loadPackageParam);        //去除升级提示
         addMyAd(loadPackageParam);           //添加插件信息
     }
 
@@ -67,8 +70,8 @@ public class MainHook implements IXposedHookLoadPackage {
     }
 
     private void hookMallIn(XC_LoadPackage.LoadPackageParam loadPackageParam) {
-        String className = PACKAGE + ".ui.j";
-        findAndHookMethod(className, loadPackageParam.classLoader, "w", new XC_MethodHook() {
+        findAndHookMethod(mMusicVersion.MALL_ENTRANCE_CLASS, loadPackageParam.classLoader,
+                mMusicVersion.MALL_ENTRANCE_METHOD, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 param.setResult(false);
@@ -78,14 +81,24 @@ public class MainHook implements IXposedHookLoadPackage {
 
     private void hookAd(XC_LoadPackage.LoadPackageParam loadPackageParam) {
         Class<?> AdClass = findClass(PACKAGE + ".module.ad.c.b", loadPackageParam.classLoader);
-        String adClassName = PACKAGE + ".module.ad.c";
-        findAndHookMethod(adClassName, loadPackageParam.classLoader, "a", AdClass,
-                new XC_MethodReplacement() {
-                    @Override
-                    protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
-                        return null;
-                    }
-                });
+        String adClassName = mMusicVersion.AD_CLASS;
+        if (mMusicVersion.VERSION_NAME.contains("4.2.0")) {
+            findAndHookMethod(adClassName, loadPackageParam.classLoader, "a", AdClass,
+                    new XC_MethodReplacement() {
+                        @Override
+                        protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                            return null;
+                        }
+                    });
+        } else if (mMusicVersion.VERSION_NAME.contains("4.2.3")) {
+            findAndHookMethod(adClassName, loadPackageParam.classLoader, "a",
+                    Boolean.TYPE, AdClass, new XC_MethodReplacement() {
+                        @Override
+                        protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                            return null;
+                        }
+                    });
+        }
     }
 
     /**
@@ -100,16 +113,28 @@ public class MainHook implements IXposedHookLoadPackage {
             className = PACKAGE + ".e";
         } else {
             // v4.1.3 该类更改了位置
-            className = PACKAGE + ".module.o.b";
+            className = mMusicVersion.SHARE_LYRICS_CLASS;
         }
 
-        findAndHookMethod(className, loadPackageParam.classLoader, "a",
+        findAndHookMethod(className, loadPackageParam.classLoader, mMusicVersion.SHARE_LYRICS_METHOD,
                 MusicInfoClass, Context.class, Integer.TYPE, new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                         param.setResult(false);
                     }
                 });
+    }
+
+    private void hookUpdate(XC_LoadPackage.LoadPackageParam param) {
+        String className = mMusicVersion.UPDATE_CLASS;
+        findAndHookMethod(className, param.classLoader, mMusicVersion.UPDATE_METHOD,
+                Boolean.TYPE, new XC_MethodReplacement() {
+                    @Override
+                    protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                        return null;
+                    }
+        });
+
     }
 
     /**
@@ -119,7 +144,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private void addMyAd(XC_LoadPackage.LoadPackageParam param) {
         String className = PACKAGE + ".activity.AboutActivity";
         try {
-            findAndHookMethod(className, param.classLoader, "ac", new XC_MethodHook() {
+            findAndHookMethod(className, param.classLoader, "ab", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     String str = (String) param.getResult();
@@ -128,7 +153,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 }
             });
         } catch (NoSuchMethodError error) {
-            findAndHookMethod(className, param.classLoader, "ab", new XC_MethodHook() {
+            findAndHookMethod(className, param.classLoader, "ac", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     String str = (String) param.getResult();
