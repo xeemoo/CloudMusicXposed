@@ -1,6 +1,8 @@
 package cn.com.zhjnc.cloudmusicxposed;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.v4.view.MenuItemCompat;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -26,6 +28,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private String mVersionName;
     private XC_LoadPackage.LoadPackageParam mParam;
     private CloudMusicVersion mMusicVersion;
+//    private SharedPreferences mSharedPreferences;
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
@@ -37,10 +40,14 @@ public class MainHook implements IXposedHookLoadPackage {
         Object activityThread = callStaticMethod(findClass("android.app.ActivityThread", null),
                 "currentActivityThread");
         mContext = (Context) callMethod(activityThread, "getSystemContext");
+//        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
         mVersionName = mContext.getPackageManager().getPackageInfo(packageName, 0).versionName;
         //XposedBridge.log("CloudMusic: " + loadPackageParam.packageName + mVersionName);
         mMusicVersion = new CloudMusicVersion(mVersionName);
 
+//        if (mSharedPreferences.getBoolean("AUTO_SIGN", true)) {
+//
+//        }
         autoSign(loadPackageParam);          //自动签到
         hookMallIn(loadPackageParam);        //阻止签到时打开商城
         hookAd(loadPackageParam);            //阻止程序启动广告
@@ -74,7 +81,11 @@ public class MainHook implements IXposedHookLoadPackage {
                 mMusicVersion.MALL_ENTRANCE_METHOD, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                param.setResult(false);
+                if (mMusicVersion.VERSION_NAME.contains("4.3.4")) {
+                    param.setResult(true);
+                } else {
+                    param.setResult(false);
+                }
             }
         });
     }
@@ -90,7 +101,7 @@ public class MainHook implements IXposedHookLoadPackage {
                             return null;
                         }
                     });
-        } else if (mMusicVersion.VERSION_NAME.contains("4.2.3")) {
+        } else if (mMusicVersion.VERSION_NAME.contains("4.2.3") || mMusicVersion.VERSION_NAME.contains("4.3.4")) {
             findAndHookMethod(adClassName, loadPackageParam.classLoader, "a",
                     Boolean.TYPE, AdClass, new XC_MethodReplacement() {
                         @Override
@@ -142,7 +153,7 @@ public class MainHook implements IXposedHookLoadPackage {
      * @param param
      */
     private void addMyAd(XC_LoadPackage.LoadPackageParam param) {
-        String className = PACKAGE + ".activity.AboutActivity";
+        String className = mMusicVersion.ABOUT_CLASS;
         try {
             findAndHookMethod(className, param.classLoader, "ab", new XC_MethodHook() {
                 @Override
@@ -166,7 +177,7 @@ public class MainHook implements IXposedHookLoadPackage {
 
     private void hookColorPicker(XC_LoadPackage.LoadPackageParam param) {
         final Class clazz = XposedHelpers.findClass(PACKAGE + ".activity.ThemeColorDetailActivity", param.classLoader);
-        final Class pickerClass = XposedHelpers.findClass(PACKAGE + ".ui.a.a", param.classLoader);
+        final Class pickerClass = XposedHelpers.findClass(mMusicVersion.PICKER_CLASS, param.classLoader);
         findAndHookMethod(clazz, "onCreateOptionsMenu", Menu.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
