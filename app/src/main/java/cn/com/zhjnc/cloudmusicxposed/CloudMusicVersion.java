@@ -52,8 +52,8 @@ public class CloudMusicVersion {
         AD_METHOD = "a";
         SHARE_LYRICS_CLASS = PACKAGE + ".module.o.c";
         SHARE_LYRICS_METHOD = "a";
-        UPDATE_CLASS = PACKAGE + ".module.n.f";  //TODO 待修改
-        UPDATE_METHOD = "a";     //TODO 待修改
+        UPDATE_CLASS = PACKAGE + ".module.n.f";
+        UPDATE_METHOD = "a";   
         ABOUT_CLASS = PACKAGE + ".activity.AboutActivity";
         ABOUT_METHOD = "ab";
         PICKER_CLASS = PACKAGE + ".ui.a.a";
