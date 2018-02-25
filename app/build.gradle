@@ -2,13 +2,13 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    buildToolsVersion '27.0.1'
     defaultConfig {
         applicationId "cn.com.zhjnc.cloudmusicxposed"
         minSdkVersion 21
         targetSdkVersion 25
-        versionCode 7
-        versionName "v2.2"
+        versionCode 8
+        versionName "v2.3"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {

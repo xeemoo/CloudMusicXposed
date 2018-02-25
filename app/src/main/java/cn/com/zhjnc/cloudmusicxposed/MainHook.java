@@ -1,16 +1,16 @@
 package cn.com.zhjnc.cloudmusicxposed;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.support.v4.view.MenuItemCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
+import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
+import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
@@ -20,15 +20,22 @@ import static de.robv.android.xposed.XposedHelpers.callStaticMethod;
 import static de.robv.android.xposed.XposedHelpers.findAndHookMethod;
 import static de.robv.android.xposed.XposedHelpers.findClass;
 
-public class MainHook implements IXposedHookLoadPackage {
+public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
     private static final String PACKAGE = "com.netease.cloudmusic";
+    private static final String MY_PACKAGE = "cn.com.zhjnc.cloudmusicxposed";
 
     private Context mContext;
     private String mVersionName;
     private XC_LoadPackage.LoadPackageParam mParam;
     private CloudMusicVersion mMusicVersion;
-//    private SharedPreferences mSharedPreferences;
+    private XSharedPreferences xPref;
+
+    @Override
+    public void initZygote(StartupParam startupParam) throws Throwable {
+        xPref = new XSharedPreferences(MY_PACKAGE, "settings");
+        xPref.makeWorldReadable();
+    }
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) throws Throwable {
@@ -40,21 +47,33 @@ public class MainHook implements IXposedHookLoadPackage {
         Object activityThread = callStaticMethod(findClass("android.app.ActivityThread", null),
                 "currentActivityThread");
         mContext = (Context) callMethod(activityThread, "getSystemContext");
-//        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
         mVersionName = mContext.getPackageManager().getPackageInfo(packageName, 0).versionName;
-        //XposedBridge.log("CloudMusic: " + loadPackageParam.packageName + mVersionName);
+        XposedBridge.log("CloudMusic: " + loadPackageParam.packageName + mVersionName);
         mMusicVersion = new CloudMusicVersion(mVersionName);
 
-//        if (mSharedPreferences.getBoolean("AUTO_SIGN", true)) {
-//
-//        }
-        autoSign(loadPackageParam);          //自动签到
         hookMallIn(loadPackageParam);        //阻止签到时打开商城
         hookAd(loadPackageParam);            //阻止程序启动广告
-        canShareAnyMusic(loadPackageParam);  //去除无版权歌曲分享限制
-        hookColorPicker(loadPackageParam);   //个性换肤的自选颜色增加ARGB快捷入口
-        hookUpdate(loadPackageParam);        //去除升级提示
         addMyAd(loadPackageParam);           //添加插件信息
+
+        if (xPref.getBoolean("AUTO_SIGN", true)) {
+            XposedBridge.log("------ do AUTO_SIGN");
+            autoSign(loadPackageParam);          //自动签到
+        }
+
+        if (xPref.getBoolean("ARGB", true)) {
+            XposedBridge.log("------ do ARGB");
+            hookColorPicker(loadPackageParam);   //个性换肤的自选颜色增加ARGB快捷入口
+        }
+
+        if (xPref.getBoolean("SHARE_LRC", true)) {
+            XposedBridge.log("------ do SHARE_LRC");
+            canShareAnyMusic(loadPackageParam);  //去除无版权歌曲分享限制
+        }
+
+        if (xPref.getBoolean("NO_UPDATE", true)) {
+            XposedBridge.log("------ do NO_UPDATE");
+            hookUpdate(loadPackageParam);        //去除升级提示
+        }
     }
 
     private void autoSign(XC_LoadPackage.LoadPackageParam param) {
@@ -81,7 +100,7 @@ public class MainHook implements IXposedHookLoadPackage {
                 mMusicVersion.MALL_ENTRANCE_METHOD, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                if (mMusicVersion.VERSION_NAME.contains("4.3.4")) {
+                if (mMusicVersion.VERSION_NAME.contains("4.3.4") || mMusicVersion.VERSION_NAME.contains("4.3.5")) {
                     param.setResult(true);
                 } else {
                     param.setResult(false);
@@ -101,7 +120,9 @@ public class MainHook implements IXposedHookLoadPackage {
                             return null;
                         }
                     });
-        } else if (mMusicVersion.VERSION_NAME.contains("4.2.3") || mMusicVersion.VERSION_NAME.contains("4.3.4")) {
+        } else if (mMusicVersion.VERSION_NAME.contains("4.2.3")
+                || mMusicVersion.VERSION_NAME.contains("4.3.4")
+                || mMusicVersion.VERSION_NAME.contains("4.3.5")) {
             findAndHookMethod(adClassName, loadPackageParam.classLoader, "a",
                     Boolean.TYPE, AdClass, new XC_MethodReplacement() {
                         @Override
@@ -110,6 +131,15 @@ public class MainHook implements IXposedHookLoadPackage {
                         }
                     });
         }
+
+        Class<?> AdInfoClass = findClass(PACKAGE + ".module.ad.meta.AdInfo", loadPackageParam.classLoader);
+        findAndHookMethod(PACKAGE + ".activity.LoadingAdActivity", loadPackageParam.classLoader, "a",
+                Context.class, AdInfoClass, Integer.TYPE, new XC_MethodReplacement() {
+                    @Override
+                    protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                        return null;
+                    }
+                });
     }
 
     /**

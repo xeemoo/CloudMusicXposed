@@ -28,6 +28,8 @@ public class CloudMusicVersion {
             set423();
         } else if (version.contains("4.3.4")) {
             set434();
+        } else if (version.contains("4.3.5")) {
+            set435();
         }
     }
 
@@ -53,7 +55,7 @@ public class CloudMusicVersion {
         SHARE_LYRICS_CLASS = PACKAGE + ".module.o.c";
         SHARE_LYRICS_METHOD = "a";
         UPDATE_CLASS = PACKAGE + ".module.n.f";
-        UPDATE_METHOD = "a";   
+        UPDATE_METHOD = "a";
         ABOUT_CLASS = PACKAGE + ".activity.AboutActivity";
         ABOUT_METHOD = "ab";
         PICKER_CLASS = PACKAGE + ".ui.a.a";
@@ -65,6 +67,20 @@ public class CloudMusicVersion {
         AD_CLASS = PACKAGE + ".module.ad.c";
         AD_METHOD = "a";
         SHARE_LYRICS_CLASS = PACKAGE + ".module.o.g";
+        SHARE_LYRICS_METHOD = "a";
+        UPDATE_CLASS = PACKAGE + ".module.n.f";
+        UPDATE_METHOD = "a";
+        ABOUT_CLASS = PACKAGE + ".activity.AboutActivity";
+        ABOUT_METHOD = "ab";
+        PICKER_CLASS = PACKAGE + ".ui.MaterialDiloagCommon.a";
+    }
+
+    private void set435() {
+        MALL_ENTRANCE_CLASS = PACKAGE + ".module.a.b";
+        MALL_ENTRANCE_METHOD = "j";
+        AD_CLASS = PACKAGE + ".module.ad.c";
+        AD_METHOD = "a";
+        SHARE_LYRICS_CLASS = PACKAGE + ".module.o.h";
         SHARE_LYRICS_METHOD = "a";
         UPDATE_CLASS = PACKAGE + ".module.n.f";
         UPDATE_METHOD = "a";

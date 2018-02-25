@@ -1,0 +1,18 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="AUTO_SIGN"
+        android:title="@string/auto_sign" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="ARGB"
+        android:title="@string/argb" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="SHARE_LRC"
+        android:title="@string/shareLrc" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="NO_UPDATE"
+        android:title="@string/no_update" />
+</PreferenceScreen>

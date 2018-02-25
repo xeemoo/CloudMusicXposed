@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CloudMusicXposed</string>
+    <string name="auto_sign">自动签到</string>
+    <string name="argb">开启ARGB入口</string>
+    <string name="shareLrc">分享任意歌曲歌词</string>
+    <string name="no_update">不升级</string>
+    <string name="setting_change">重启手机生效</string>
+</resources>
