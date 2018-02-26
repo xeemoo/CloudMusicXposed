@@ -51,7 +51,7 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         XposedBridge.log("CloudMusic: " + loadPackageParam.packageName + mVersionName);
         mMusicVersion = new CloudMusicVersion(mVersionName);
 
-        hookMallIn(loadPackageParam);        //阻止签到时打开商城
+        //hookMallIn(loadPackageParam);      //暂时保留，为了乐签
         hookAd(loadPackageParam);            //阻止程序启动广告
         addMyAd(loadPackageParam);           //添加插件信息
 

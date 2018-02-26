@@ -3,14 +3,13 @@
 网易云音乐Android客户端插件
 
 - 自动签到
-- 阻止签到按钮打开商城 (支持v4.2.0，其他版本未测试)
 - 阻止程序启动页广告 (支持v4.2.0，其他版本未测试)
 - 去除因版权问题无法分享歌词图片的限制 (支持v4.1.1及以上，v4.1.1以下未测试)
 - 增加个性换肤自选颜色快捷入口
 
 NeteaseCloudMusic for Android auto sign
 
-**Download:**  [CloudMusicXposed_v2.2](https://github.com/XF-zhjnc/CloudMusicXposed/raw/master/app/cloudmusicxposed_v2.2.apk)
+**Download:**  [CloudMusicXposed_v2.3](https://github.com/XF-zhjnc/CloudMusicXposed/raw/master/app/cloudmusicxposed_v2.3.apk)
 
 ## Screenshot ##
 
@@ -27,9 +26,7 @@ NeteaseCloudMusic for Android auto sign
 
 这里是即将要添加的功能，如果您有新的想法，可以开issues，如果您实现了该功能，欢迎PR。
 
-1. TODO  解锁vip专属歌词分享模板
-2. TODO  提取v4.3.5乐签
-3. TODO  记录往期日推歌单
+1. TODO  记录往期日推歌单
 
 ## 日志 ##
 
