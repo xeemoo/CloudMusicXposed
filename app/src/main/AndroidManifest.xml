@@ -20,7 +20,7 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="网易云音乐自动签到插件" />
+            android:value="网易云音乐插件" />
         <meta-data
             android:name="xposedminversion"
             android:value="82" />

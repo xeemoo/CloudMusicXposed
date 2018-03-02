@@ -15,4 +15,8 @@
         android:defaultValue="false"
         android:key="NO_UPDATE"
         android:title="@string/no_update" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="HOOK_DAILY"
+        android:title="@string/hook_daily" />
 </PreferenceScreen>

@@ -8,7 +8,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 25
         versionCode 8
-        versionName "v2.3"
+        versionName "v3.0"
     }
     buildTypes {
         release {
@@ -28,4 +28,5 @@ repositories {
 dependencies {
     compile 'com.android.support:appcompat-v7:25.2.0'
     provided 'de.robv.android.xposed:api:82'
+    compile 'com.google.code.gson:gson:2.2.4'
 }
