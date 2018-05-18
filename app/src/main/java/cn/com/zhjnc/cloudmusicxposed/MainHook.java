@@ -4,7 +4,6 @@ import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.view.MenuItemCompat;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -63,14 +62,14 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
         FileUtils.MOD_Context = mContext.createPackageContext(MY_PACKAGE, Context.CONTEXT_IGNORE_SECURITY);
 
-        //hookMallIn(loadPackageParam);      //暂时保留，为了乐签
+        hookMallIn(loadPackageParam);        //阻止签到进入商城
         hookAd(loadPackageParam);            //阻止程序启动广告
-        addMyAd(loadPackageParam);           //添加插件信息
+        //addMyAd(loadPackageParam);         //添加插件信息(4.1.3没有)
 
         autoSign(loadPackageParam);          //自动签到
-        hookColorPicker(loadPackageParam);   //个性换肤的自选颜色增加ARGB快捷入口
+        //hookColorPicker(loadPackageParam);   //个性换肤的自选颜色增加ARGB快捷入口
         canShareAnyMusic(loadPackageParam);  //去除无版权歌曲分享限制
-        hookUpdate(loadPackageParam);        //去除升级提示
+        //hookUpdate(loadPackageParam);        //去除升级提示
         hookDailyFragment(loadPackageParam); //切换“每日推荐”
     }
 
@@ -102,7 +101,7 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             XposedBridge.hookAllMethods(DailyRcmdFragment, "onCreateView", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(final MethodHookParam param) throws Throwable {
-                    Field textViewField = XposedHelpers.findFieldIfExists(DailyRcmdFragment, "o");
+                    Field textViewField = XposedHelpers.findFieldIfExists(DailyRcmdFragment, "n");
                     Field adapterField = XposedHelpers.findFieldIfExists(DailyRcmdFragment, "c");
                     textViewField.setAccessible(true);
                     adapterField.setAccessible(true);
@@ -208,7 +207,7 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                 new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult(true);
+                        param.setResult(false);
                     }
                 }
         );
@@ -219,11 +218,10 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
      * @param param
      */
     private void hookAd(XC_LoadPackage.LoadPackageParam param) {
-        Class<?> AdClass = findClass(PACKAGE + ".module.ad.c.b", param.classLoader);
+        Class<?> AdClass = findClass(PACKAGE + ".module.ad.c.a", param.classLoader);
         Class<?> AdInfoClass = findClass(CloudMusicVersion.AD_INFO_CLASS, param.classLoader);
 
-        findAndHookMethod(CloudMusicVersion.AD_CLASS, param.classLoader, "a",
-                Boolean.TYPE, AdClass,
+        findAndHookMethod(CloudMusicVersion.AD_CLASS, param.classLoader, "a", AdClass,
                 new XC_MethodReplacement() {
                     @Override
                     protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
