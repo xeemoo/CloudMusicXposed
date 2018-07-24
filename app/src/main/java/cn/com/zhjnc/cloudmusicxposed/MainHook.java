@@ -3,18 +3,25 @@ package cn.com.zhjnc.cloudmusicxposed;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.os.BaseBundle;
+import android.os.Build;
+import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.DatePicker;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONObject;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.List;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -39,12 +46,9 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     private Context mContext;
     private String mVersionName;
     private XC_LoadPackage.LoadPackageParam mParam;
-    private XSharedPreferences xPref;
 
     @Override
     public void initZygote(StartupParam startupParam) throws Throwable {
-//        xPref = new XSharedPreferences(MY_PACKAGE, "settings");
-//        xPref.makeWorldReadable();
     }
 
     @Override
@@ -62,20 +66,22 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
         FileUtils.MOD_Context = mContext.createPackageContext(MY_PACKAGE, Context.CONTEXT_IGNORE_SECURITY);
 
-        hookMallIn(loadPackageParam);        //阻止签到进入商城
-        hookAd(loadPackageParam);            //阻止程序启动广告
-        //addMyAd(loadPackageParam);         //添加插件信息(4.1.3没有)
+        hookMallIn(loadPackageParam);           //阻止签到进入商城
+        hookAd(loadPackageParam);               //阻止程序闪屏广告
+        hookSearchAd(loadPackageParam);         //阻止搜索页面广告
+        hookCommentAd(loadPackageParam);        //阻止评论区的非评论类容
+        addMyAd(loadPackageParam);              //添加插件信息
 
-        autoSign(loadPackageParam);          //自动签到
-        //hookColorPicker(loadPackageParam);   //个性换肤的自选颜色增加ARGB快捷入口
-        canShareAnyMusic(loadPackageParam);  //去除无版权歌曲分享限制
-        //hookUpdate(loadPackageParam);        //去除升级提示
-        hookDailyFragment(loadPackageParam); //切换“每日推荐”
+        autoSign(loadPackageParam);             //自动签到
+        canShareAnyMusic(loadPackageParam);     //去除无版权歌曲分享限制
+        hookShareLrcVIPImage(loadPackageParam); //去除歌词分享图片VIP下载
+        hookUpdate(loadPackageParam);           //去除升级提示
+        hookDailyFragment(loadPackageParam);    //切换“每日推荐”
     }
 
     private void hookDailyFragment(XC_LoadPackage.LoadPackageParam param) {
         if (PreferencesUtils.hookDaily()) {
-            final Class<?> DailyRcmdFragment = findClass(PACKAGE + ".fragment.DailyRcmdMusicFragment", param.classLoader);
+            final Class<?> DailyRcmdFragment = findClass(CloudMusicVersion.DAILY_RCMD_FRAGMENT, param.classLoader);
             final Class<?> PagerListCallback = findClass(CloudMusicVersion.PAGERLISTVIEW_CALLBACK, param.classLoader);
 
             XposedBridge.hookAllMethods(DailyRcmdFragment, "onCreateView", new XC_MethodHook() {
@@ -101,7 +107,7 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             XposedBridge.hookAllMethods(DailyRcmdFragment, "onCreateView", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(final MethodHookParam param) throws Throwable {
-                    Field textViewField = XposedHelpers.findFieldIfExists(DailyRcmdFragment, "n");
+                    Field textViewField = XposedHelpers.findFieldIfExists(DailyRcmdFragment, CloudMusicVersion.DAILY_TEXTVIEW_NAME);
                     Field adapterField = XposedHelpers.findFieldIfExists(DailyRcmdFragment, "c");
                     textViewField.setAccessible(true);
                     adapterField.setAccessible(true);
@@ -114,6 +120,7 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                             int year = c.get(Calendar.YEAR);
                             int month = c.get(Calendar.MONTH);
                             int day = c.get(Calendar.DAY_OF_MONTH);
+                            // TODO new DatePickerDialog(需要一个正确的Context, ....)
                             final DatePickerDialog dialog = new DatePickerDialog(ActivityHook.getCurrentActivity(),
                                     new DateSetListener(mParam, tv, listAdapter), year, month, day);
                             ActivityHook.getCurrentActivity().runOnUiThread(new Runnable() {
@@ -139,7 +146,7 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             mParam = p;
             mTextView = tv;
             listAdapter = adapter;
-            MusicInfo = XposedHelpers.findClass(PACKAGE + ".meta.MusicInfo", p.classLoader);
+            MusicInfo = XposedHelpers.findClass(CloudMusicVersion.MUSIC_INFO_CLASS, p.classLoader);
         }
 
         @Override
@@ -179,7 +186,7 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
     private void autoSign(XC_LoadPackage.LoadPackageParam param) {
         findAndHookMethod("android.widget.TextView", param.classLoader, "setText",
-                CharSequence.class,
+                CharSequence.class, TextView.BufferType.class, Boolean.TYPE, Integer.TYPE,
                 new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -203,14 +210,18 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
      * @param param
      */
     private void hookMallIn(XC_LoadPackage.LoadPackageParam param) {
-        findAndHookMethod(CloudMusicVersion.MALL_ENTRANCE_CLASS, param.classLoader, CloudMusicVersion.MALL_ENTRANCE_METHOD,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        param.setResult(false);
+        try {
+            findAndHookMethod(CloudMusicVersion.MALL_ENTRANCE_CLASS, param.classLoader, CloudMusicVersion.MALL_ENTRANCE_METHOD,
+                    new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            param.setResult(true);
+                        }
                     }
-                }
-        );
+            );
+        } catch (Throwable t) {
+            XposedBridge.log("[CMX] hookMallIn error.");
+        }
     }
 
     /**
@@ -218,47 +229,130 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
      * @param param
      */
     private void hookAd(XC_LoadPackage.LoadPackageParam param) {
-        Class<?> AdClass = findClass(PACKAGE + ".module.ad.c.a", param.classLoader);
-        Class<?> AdInfoClass = findClass(CloudMusicVersion.AD_INFO_CLASS, param.classLoader);
+        Class<?> AdFragment = findClass(CloudMusicVersion.AD_FRAGMENT, param.classLoader);
+        Class<?> LoadingAdActivity = findClass(CloudMusicVersion.LOADINGAD_ACTIVITY, param.classLoader);
 
-        findAndHookMethod(CloudMusicVersion.AD_CLASS, param.classLoader, "a", AdClass,
+        /*XposedBridge.hookAllConstructors(LoadingAdActivity, new XC_MethodReplacement() {
+            @Override
+            protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+                return null;
+            }
+        });*/
+
+        /*findAndHookMethod(AdFragment, "onCreateView",
+                LayoutInflater.class, ViewGroup.class, Bundle.class,
                 new XC_MethodReplacement() {
                     @Override
-                    protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                    protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
                         return null;
                     }
                 }
-        );
+        );*/
 
-        findAndHookMethod(CloudMusicVersion.LOADINGAD_ACTIVITY, param.classLoader, "a",
-                Context.class, AdInfoClass, Integer.TYPE,
-                new XC_MethodReplacement() {
-                    @Override
-                    protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
-                        return null;
-                    }
+        // github@ zjns/PureNeteaseCloudMusic-Xposed
+        Class<?> BundleClass = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP ? BaseBundle.class : Bundle.class;
+        findAndHookMethod(BundleClass, "getSerializable", String.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                if (param.args[0].toString().equals("adInfo")) {
+                    param.setResult(null);
                 }
-        );
+            }
+        });
     }
+
+    /**
+     * 搜索页面的广告
+     * github@ zjns/PureNeteaseCloudMusic-Xposed
+     * @param param
+     */
+    private void hookSearchAd(XC_LoadPackage.LoadPackageParam param) {
+        Class<?> Search_AD_Class = findClass(CloudMusicVersion.SEARCH_AD_CLASS, param.classLoader);
+
+        XposedBridge.hookAllConstructors(Search_AD_Class, new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                View view = (View) param.thisObject;
+                view.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    /**
+     * 去除评论区的非评论内容
+     * github@ zjns/PureNeteaseCloudMusic-Xposed
+     * @param param
+     */
+    private void hookCommentAd(XC_LoadPackage.LoadPackageParam param) {
+        Class<?> Comment_AD_Class = findClass(CloudMusicVersion.COMMENT_AD_CLASS, param.classLoader);
+        try {
+            findAndHookMethod(Comment_AD_Class, "a", new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    ArrayList<?> commList = (ArrayList) param.getResult();
+                    if (commList == null || commList.isEmpty()) {
+                        return;
+                    }
+                    Iterator<?> iterator = commList.iterator();
+                    while(iterator.hasNext()) {
+                        Object entry = iterator.next();
+                        if (checkCommentType(entry)) {
+                            iterator.remove();
+                        }
+                    }
+                    // param.setResult(commList); TODO Why
+                }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log("[CMX] hookCommentAd error.");
+        }
+    }
+    private boolean checkCommentType(Object obj) {
+        int type = (int) callMethod(obj, "getType");
+        return (type == 5 || type == 6 || type == 9 || type == 11 || type == 13);
+    }
+
 
     /**
      * 去除因版权问题无法分享歌词图片的限制
      * @param param
      */
     private void canShareAnyMusic(XC_LoadPackage.LoadPackageParam param) {
-        Class<?> MusicInfoClass = findClass(PACKAGE + ".meta.MusicInfo", param.classLoader);
+        Class<?> MusicInfoClass = findClass(CloudMusicVersion.MUSIC_INFO_CLASS, param.classLoader);
+        try {
+            findAndHookMethod(CloudMusicVersion.SHARE_LYRICS_CLASS, param.classLoader, CloudMusicVersion.SHARE_LYRICS_METHOD,
+                    MusicInfoClass, Context.class, Integer.TYPE,
+                    new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                            if (PreferencesUtils.shareLrc()) {
+                                param.setResult(false);
+                            }
+                        }
+                    }
+            );
+        } catch (Throwable t) {
+            XposedBridge.log("[CMX] canShareAnyMusic error.");
+        }
+    }
 
-        findAndHookMethod(CloudMusicVersion.SHARE_LYRICS_CLASS, param.classLoader, CloudMusicVersion.SHARE_LYRICS_METHOD,
-                MusicInfoClass, Context.class, Integer.TYPE,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        if (PreferencesUtils.shareLrc()) {
+    /**
+     * 免VIP下载分享歌词图片
+     * @param param
+     */
+    private void hookShareLrcVIPImage(XC_LoadPackage.LoadPackageParam param) {
+        try {
+            findAndHookMethod(CloudMusicVersion.VIP_LRC_IMAGE_CLASS, param.classLoader, "e",
+                    new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                             param.setResult(false);
                         }
                     }
-                }
-        );
+            );
+        } catch (Throwable t) {
+            XposedBridge.log("[CMX] hookShareLrcVIPImage error.");
+        }
     }
 
     /**
@@ -267,15 +361,19 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
      */
     private void hookUpdate(XC_LoadPackage.LoadPackageParam param) {
         if (PreferencesUtils.update()) {
-            findAndHookMethod(CloudMusicVersion.UPDATE_CLASS, param.classLoader, CloudMusicVersion.UPDATE_METHOD,
-                    Boolean.TYPE,
-                    new XC_MethodReplacement() {
-                        @Override
-                        protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
-                            return null;
+            try {
+                findAndHookMethod(CloudMusicVersion.UPDATE_CLASS, param.classLoader, CloudMusicVersion.UPDATE_METHOD,
+                        Boolean.TYPE,
+                        new XC_MethodReplacement() {
+                            @Override
+                            protected Object replaceHookedMethod(MethodHookParam methodHookParam) throws Throwable {
+                                return null;
+                            }
                         }
-                    }
-            );
+                );
+            } catch (Throwable t) {
+                XposedBridge.log("[CMX] hookUpdate error.");
+            }
         }
     }
 
@@ -286,7 +384,7 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     private void addMyAd(XC_LoadPackage.LoadPackageParam param) {
         String className = CloudMusicVersion.ABOUT_CLASS;
         try {
-            findAndHookMethod(className, param.classLoader, "ab", new XC_MethodHook() {
+            findAndHookMethod(className, param.classLoader, CloudMusicVersion.ABOUT_METHOD, new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     String str = (String) param.getResult();
@@ -295,7 +393,7 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                 }
             });
         } catch (NoSuchMethodError error) {
-            findAndHookMethod(className, param.classLoader, "ac", new XC_MethodHook() {
+            findAndHookMethod(className, param.classLoader, "ab", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                     String str = (String) param.getResult();
@@ -308,42 +406,43 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
     /**
      * 个性换肤 - 自选颜色
+     * 废弃
      * @param param
      */
-    private void hookColorPicker(XC_LoadPackage.LoadPackageParam param) {
-        final Class clazz = XposedHelpers.findClass(CloudMusicVersion.THEME_COLOR_ACTIVITY, param.classLoader);
-        final Class pickerClass = XposedHelpers.findClass(CloudMusicVersion.PICKER_CLASS, param.classLoader);
-
-        findAndHookMethod(clazz, "onCreateOptionsMenu",
-                Menu.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
-                        if (PreferencesUtils.argb()) {
-                            Menu m = (Menu) param.args[0];
-                            if (m.size() == 1) {
-                                MenuItemCompat.setShowAsAction(m.add(0, 1, 0, "ARGB"), 2);
-                            }
-                        }
-                    }
-                }
-        );
-
-        findAndHookMethod(clazz, "onOptionsItemSelected",
-                MenuItem.class,
-                new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        if (PreferencesUtils.argb()) {
-                            MenuItem mi = (MenuItem) param.args[0];
-                            if (mi.getItemId() == 1) {
-                                //此处会被调用两次，估计是7.0框架的问题...
-                                callStaticMethod(pickerClass, "a", param.thisObject, 1, null);
-                            }
-                        }
-                    }
-                }
-        );
-    }
+//    private void hookColorPicker(XC_LoadPackage.LoadPackageParam param) {
+//        final Class clazz = XposedHelpers.findClass(CloudMusicVersion.THEME_COLOR_ACTIVITY, param.classLoader);
+//        final Class pickerClass = XposedHelpers.findClass(CloudMusicVersion.PICKER_CLASS, param.classLoader);
+//
+//        findAndHookMethod(clazz, "onCreateOptionsMenu",
+//                Menu.class,
+//                new XC_MethodHook() {
+//                    @Override
+//                    protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+//                        if (PreferencesUtils.argb()) {
+//                            Menu m = (Menu) param.args[0];
+//                            if (m.size() == 1) {
+//                                MenuItemCompat.setShowAsAction(m.add(0, 1, 0, "ARGB"), 2);
+//                            }
+//                        }
+//                    }
+//                }
+//        );
+//
+//        findAndHookMethod(clazz, "onOptionsItemSelected",
+//                MenuItem.class,
+//                new XC_MethodHook() {
+//                    @Override
+//                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+//                        if (PreferencesUtils.argb()) {
+//                            MenuItem mi = (MenuItem) param.args[0];
+//                            if (mi.getItemId() == 1) {
+//                                //此处会被调用两次，估计是7.0框架的问题...
+//                                callStaticMethod(pickerClass, "a", param.thisObject, 1, null);
+//                            }
+//                        }
+//                    }
+//                }
+//        );
+//    }
 
 }

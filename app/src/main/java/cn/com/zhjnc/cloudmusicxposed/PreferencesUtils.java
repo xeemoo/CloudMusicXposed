@@ -19,9 +19,9 @@ public class PreferencesUtils {
         return getInstance().getBoolean("AUTO_SIGN", false);
     }
 
-    public static boolean argb() {
-        return getInstance().getBoolean("ARGB", false);
-    }
+//    public static boolean argb() {
+//        return getInstance().getBoolean("ARGB", false);
+//    }
 
     public static boolean shareLrc() {
         return getInstance().getBoolean("SHARE_LRC", false);
