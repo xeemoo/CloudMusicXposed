@@ -69,6 +69,7 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         hookMallIn(loadPackageParam);           //阻止签到进入商城
         hookAd(loadPackageParam);               //阻止程序闪屏广告
         hookSearchAd(loadPackageParam);         //阻止搜索页面广告
+        hookDailyBarAd(loadPackageParam);       //阻止每日推荐顶部广告
         hookCommentAd(loadPackageParam);        //阻止评论区的非评论类容
         addMyAd(loadPackageParam);              //添加插件信息
 
@@ -276,6 +277,27 @@ public class MainHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                 view.setVisibility(View.GONE);
             }
         });
+    }
+
+    /**
+     * 每日推荐顶部广告
+     * @param param
+     */
+    private void hookDailyBarAd(XC_LoadPackage.LoadPackageParam param) {
+        Class<?> Daily_AD_Class = findClass(CloudMusicVersion.PAGERLISTVIEW_CALLBACK + "$1", param.classLoader);
+        Class<?> AdClass = findClass(PACKAGE + ".meta.Ad", param.classLoader);
+
+        try {
+            findAndHookMethod(Daily_AD_Class, "a", AdClass, new XC_MethodReplacement() {
+                @Override
+                protected Object replaceHookedMethod(MethodHookParam param) throws Throwable {
+                    System.out.println("fuck");
+                    return null;
+                }
+            });
+        } catch (Throwable t) {
+            XposedBridge.log("[CMX] hookDailyBarAd error.");
+        }
     }
 
     /**

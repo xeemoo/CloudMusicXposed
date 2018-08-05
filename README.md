@@ -7,6 +7,7 @@
 - 阻止程序闪屏广告, 评论区广告(感谢 [zjns/PureNeteaseCloudMusic-Xposed](https://github.com/zjns/PureNeteaseCloudMusic-Xposed) )
 - 去除因版权问题无法分享歌词图片的限制, VIP图片下载限制
 - 阻止升级
+- 更多细节看代码
 
 **Download:**  [请自行编译](http://127.0.0.1/)
 
@@ -17,7 +18,7 @@
 
 ## About ##
 
-- 适配酷安版网易云音乐 v5.3.1
+- 适配酷安版网易云音乐 v5.4.0
 - 此分支为单版本支持，多版本在[master](https://github.com/XF-zhjnc/CloudMusicXposed/tree/master)分支(暂停更新)
 - 版本更迭与master一致，新旧以日期为准
 
@@ -29,6 +30,6 @@
 
 ## 日志 ##
 
-* 2018.07.24： 适配到v5.3.1
+* 2018.08.05： 适配到v5.4.0
 
 ------
