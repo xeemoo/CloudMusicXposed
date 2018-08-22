@@ -9,7 +9,7 @@
 - 阻止升级
 - 更多细节看代码
 
-**Download:**  [请自行编译](http://127.0.0.1/)
+**Download:**  [apk](https://github.com/XF-zhjnc/CloudMusicXposed/blob/SingleVersionSupport/app/cloudmusicxposed_v3.3.apk)
 
 ## Screenshot ##
 
@@ -18,7 +18,7 @@
 
 ## About ##
 
-- 适配酷安版网易云音乐 v5.4.0
+- 适配酷安版网易云音乐 v5.4.0, v5.4.1
 - 此分支为单版本支持，多版本在[master](https://github.com/XF-zhjnc/CloudMusicXposed/tree/master)分支(暂停更新)
 - 版本更迭与master一致，新旧以日期为准
 
